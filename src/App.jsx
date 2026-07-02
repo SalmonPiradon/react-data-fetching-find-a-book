@@ -7,11 +7,13 @@ function App() {
   const [searchText, setSearchText] = useState("");
   const [searchedBook, setSearchedBook] = useState([]);
 
-  const getBook = async () => {
+  const getBook = async (searchText) => {
     try {
-      const filteredBooks = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${searchText}`);
-      console.log(filteredBooks)
-      setSearchedBook(filteredBooks.data.items || []);
+      const filteredBooks = await axios.get(`https://openlibrary.org/search.json?title=${searchText}`);
+      const strictlyFiltered = (filteredBooks.data.docs || []).filter((book) =>
+        book.title.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setSearchedBook(strictlyFiltered);
     } catch (error) {
       console.error(error);
     }
@@ -22,7 +24,12 @@ function App() {
       setSearchedBook([]);
       return;
     }
-    getBook();
+
+    const timer = setTimeout(() => {
+      getBook(searchText);
+    }, 500);
+  
+    return () => clearTimeout(timer);
   }, [searchText]);
    
 
@@ -32,7 +39,7 @@ function App() {
     <input type="text" placeholder="Search for a book" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
     <ul>
       {searchedBook.map((book) => {
-        return <li key={book.id}>{book.volumeInfo.title}</li>
+        return <li key={book.key}>{book.title}</li>
       })}
     </ul>
   </div>
